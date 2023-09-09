@@ -21,36 +21,14 @@ package org.lecturestudio.swing.components;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.Rectangle;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
-import javax.swing.JList;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JViewport;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.lecturestudio.core.PageMetrics;
 import org.lecturestudio.core.controller.RenderController;
@@ -63,6 +41,7 @@ import org.lecturestudio.core.model.listener.PageEditedListener;
 import org.lecturestudio.core.view.PresentationParameterProvider;
 import org.lecturestudio.core.view.SlideView;
 import org.lecturestudio.core.view.ViewType;
+import org.lecturestudio.swing.AwtResourceLoader;
 
 public class ThumbPanel extends JPanel {
 
@@ -123,11 +102,11 @@ public class ThumbPanel extends JPanel {
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setIgnoreRepaint(true);
 		list.setFocusable(false);
-		list.addListSelectionListener(event -> {
-			if (!event.getValueIsAdjusting()) {
-				fireThumbSelected(list.getSelectedValue());
-			}
-		});
+		//list.addListSelectionListener(event -> {
+		//	if (!event.getValueIsAdjusting()) {
+		//		//fireThumbSelected(list.getSelectedValue());
+		//	}
+		//});
 		list.addMouseListener(new MouseAdapter() {
 
 			@Override
@@ -141,6 +120,18 @@ public class ThumbPanel extends JPanel {
 					}
 
 					popupMenu.show(e.getComponent(), e.getX(), e.getY());
+				}else if(e.getButton() == MouseEvent.BUTTON1){
+					Point point = e.getPoint();
+					int boxHeight = pageRenderer.getPreferredSize().height;
+					if((nonNull(point) && point.x > pageRenderer.bookmarkButton.getX() && point.x < pageRenderer.bookmarkButton.getX() + pageRenderer.bookmarkButton.getWidth()) &&
+						 ((point.y % boxHeight) > pageRenderer.bookmarkButton.getY() && (point.y % boxHeight) < pageRenderer.bookmarkButton.getY() + pageRenderer.bookmarkButton.getHeight())){
+							//System.out.println("BUTTON");
+							fireBookmarkAdded(list.getSelectedValue());
+							//pageRenderer.bookmarkButton.setIcon(AwtResourceLoader.getIcon("bookmark-remove.svg", 24));
+							setSelectedThumbnail(document.getCurrentPage());
+					}else{
+						fireThumbSelected(list.getSelectedValue());
+					}
 				}
 			}
 		});
@@ -189,9 +180,18 @@ public class ThumbPanel extends JPanel {
 		}
 	}
 
+	public void setBookmarkButton(Page page){
+		pageRenderer.bookmarkButton.setIcon(AwtResourceLoader.getIcon("bookmark-add.svg", 24));
+
+	}
+
 	private void fireThumbSelected(Page page) {
 		Page oldPage = this.selectedPage;
 		pcs.firePropertyChange("selectedSlide", oldPage, page);
+	}
+
+	private void fireBookmarkAdded(Page page) {
+		pcs.firePropertyChange("addBookmark", null, page);
 	}
 
 	@Override
@@ -319,6 +319,10 @@ public class ThumbPanel extends JPanel {
 		pcs.addPropertyChangeListener("selectedSlide", listener);
 	}
 
+	public void addBookmarkListener(PropertyChangeListener listener) {
+		pcs.addPropertyChangeListener("addBookmark", listener);
+	}
+
 	public void removeSelectedSlideChangedListener(PropertyChangeListener listener) {
 		pcs.removePropertyChangeListener("selectedSlide", listener);
 	}
@@ -388,6 +392,7 @@ public class ThumbPanel extends JPanel {
 
 		private boolean selected;
 
+		private JButton bookmarkButton = new JButton();
 
 		PageRenderer(RenderController renderController,
 				PresentationParameterProvider ppProvider) {
@@ -397,6 +402,22 @@ public class ThumbPanel extends JPanel {
 
 			renderer = new SlideRenderer(ViewType.Preview);
 			renderer.setRenderController(renderController);
+
+			//JButton bookmarkButton = new JButton();
+			JPanel testPanel = new JPanel();
+			testPanel.setOpaque(false);
+			testPanel.setLayout(new BoxLayout(testPanel, BoxLayout.X_AXIS));
+			setLayout(new BorderLayout());
+			bookmarkButton.setIcon(AwtResourceLoader.getIcon("bookmark-add.svg", 24));
+			bookmarkButton.addActionListener(e -> System.out.println("Hallo"));
+			bookmarkButton.setOpaque(false);
+			testPanel.add(Box.createHorizontalGlue());
+			testPanel.add(bookmarkButton);
+			add(testPanel, BorderLayout.PAGE_START);
+
+			//System.out.println(bookmarkButton.getMousePosition());
+			//System.out.println("X: " + bookmarkButton.getX());
+			//System.out.println("Y: " + bookmarkButton.getY());
 		}
 
 		public void setDeviceTransform(AffineTransform transform) {

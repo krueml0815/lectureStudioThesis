@@ -78,6 +78,12 @@ public class BookmarkService {
 	public Bookmark createBookmark(String keyStr) throws BookmarkException {
 		Document selectedDoc = documentService.getDocuments().getSelectedDocument();
 		Page page = selectedDoc.getCurrentPage();
+		return createBookmark(keyStr, page);
+	}
+
+	public Bookmark createBookmark(String keyStr, Page page) throws BookmarkException {
+		Document selectedDoc = documentService.getDocuments().getSelectedDocument();
+		//Page page = selectedDoc.getCurrentPage();
 
 		if (isNull(page)) {
 			throw new BookmarkException("No document selected");
@@ -179,6 +185,19 @@ public class BookmarkService {
 	public Bookmark createDefaultBookmark()throws BookmarkException{
 
 		Bookmark bookmark = createBookmark("L" + defaultBookmarkCounter);
+
+		defaultBookmarkCounter++;
+		return bookmark;
+	}
+
+	/**
+	 * Creates a bookmark with a default shortcut
+	 *
+	 * @return the new created bookmark
+	 */
+	public Bookmark createDefaultBookmark(Page page)throws BookmarkException{
+
+		Bookmark bookmark = createBookmark("L" + defaultBookmarkCounter, page);
 
 		defaultBookmarkCounter++;
 		return bookmark;

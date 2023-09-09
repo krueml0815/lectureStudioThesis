@@ -120,6 +120,8 @@ public class SwingSlidesView extends JPanel implements SlidesView {
 
 	private ConsumerAction<Page> selectPageAction;
 
+	private ConsumerAction<Page> addBookmarkAction;
+
 	private ConsumerAction<Matrix> viewTransformAction;
 
 	private ConsumerAction<MessengerMessage> discardMessageAction;
@@ -369,6 +371,11 @@ public class SwingSlidesView extends JPanel implements SlidesView {
 				}
 			});
 
+			thumbPanel.addBookmarkListener(event -> {
+				if (event.getNewValue() instanceof Page page) {
+					executeAction(addBookmarkAction, page);
+				}
+			});
 			String tabName = StringUtils.abbreviate(doc.getName(), 32);
 
 			VerticalTab tab = VerticalTab.fromText(tabName, getSlidesTabPane().getTabPlacement());
@@ -843,6 +850,11 @@ public class SwingSlidesView extends JPanel implements SlidesView {
 	@Override
 	public void setOnSelectPage(ConsumerAction<Page> action) {
 		selectPageAction = action;
+	}
+
+	@Override
+	public void setOnAddBookmark(ConsumerAction<Page> action) {
+		addBookmarkAction = action;
 	}
 
 	@Override

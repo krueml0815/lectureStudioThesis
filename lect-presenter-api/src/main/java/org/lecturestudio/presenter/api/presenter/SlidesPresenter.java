@@ -61,13 +61,8 @@ import org.lecturestudio.presenter.api.config.PresenterConfiguration;
 import org.lecturestudio.presenter.api.context.PresenterContext;
 import org.lecturestudio.presenter.api.event.*;
 import org.lecturestudio.presenter.api.input.Shortcut;
-import org.lecturestudio.presenter.api.model.MessageBarPosition;
-import org.lecturestudio.presenter.api.model.MessageDocument;
-import org.lecturestudio.presenter.api.model.NoteBarPosition;
-import org.lecturestudio.presenter.api.service.RecordingService;
-import org.lecturestudio.presenter.api.service.WebRtcStreamService;
-import org.lecturestudio.presenter.api.service.WebService;
-import org.lecturestudio.presenter.api.service.WebServiceInfo;
+import org.lecturestudio.presenter.api.model.*;
+import org.lecturestudio.presenter.api.service.*;
 import org.lecturestudio.presenter.api.stylus.StylusHandler;
 import org.lecturestudio.presenter.api.view.PageObjectRegistry;
 import org.lecturestudio.presenter.api.view.SlidesView;
@@ -93,6 +88,7 @@ import javax.inject.Inject;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,6 +149,8 @@ public class SlidesPresenter extends Presenter<SlidesView> {
 
 	private SelectionIdleTimer idleTimer;
 
+	@Inject
+	private BookmarkService bookmarkService;
 
 	@Inject
 	SlidesPresenter(ApplicationContext context, SlidesView view,
@@ -820,6 +818,32 @@ public class SlidesPresenter extends Presenter<SlidesView> {
 		idleTimer.runIdleTask();
 	}
 
+	private void createNewBookmark(Page page) {
+		try {
+			bookmarkCreated(bookmarkService.createDefaultBookmark(page));
+		}catch (BookmarkExistsException e){
+			String message = MessageFormat.format(context.getDictionary().get("bookmark.exists"), page.getPageNumber());
+			showNotificationPopup(message); //"bookmark.assign.warning",
+		} catch (BookmarkException e) {
+			handleException(e, "Create bookmark failed", "bookmark.assign.warning");
+		}
+	}
+
+	private void bookmarkCreated(Bookmark bookmark) {
+		String shortcut = bookmark.getShortcut().toUpperCase();
+		String message = MessageFormat.format(context.getDictionary().get("bookmark.created"), shortcut);
+
+		showNotificationPopup(message);
+		close();
+	}
+
+	private void bookmarkRemoved(String shortcut) {
+		String message = MessageFormat.format(context.getDictionary().get("bookmark.removed"), shortcut);
+
+		showNotificationPopup(message);
+		close();
+	}
+
 	private void nextPage() {
 		documentService.selectNextPage();
 	}
@@ -1132,6 +1156,7 @@ public class SlidesPresenter extends Presenter<SlidesView> {
 		view.setOnNewPage(this::newWhiteboardPage);
 		view.setOnDeletePage(this::deleteWhiteboardPage);
 		view.setOnSelectPage(this::selectPage);
+		view.setOnAddBookmark(this::createNewBookmark);
 		view.setOnSelectDocument(this::selectDocument);
 		view.setOnViewTransform(this::setViewTransform);
 

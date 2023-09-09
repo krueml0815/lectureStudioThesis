@@ -126,6 +126,8 @@ public interface SlidesView extends View {
 
 	void setOnSelectPage(ConsumerAction<Page> action);
 
+	void setOnAddBookmark(ConsumerAction<Page> action);
+
 	void setOnViewTransform(ConsumerAction<Matrix> action);
 
 	void setOnNewPage(Action action);
